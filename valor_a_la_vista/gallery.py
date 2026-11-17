@@ -55,3 +55,16 @@ def add_video_frames(gallery, frames):
 def media_origins(gallery):
     return {f"Foto {ident[:12]} · {item['nombre']}": dict(item.get("origen", {"tipo": "foto"}))
             for ident, item in gallery.items()}
+
+
+def replace_video_frames(gallery, frames, video_sha):
+    """Reemplaza las muestras del mismo video; conserva otras fotos y categorías."""
+    previous = {key: item for key, item in gallery.items()
+                if item.get("origen", {}).get("tipo") == "video"
+                and item["origen"].get("video_sha256") == video_sha}
+    remaining = {key: item for key, item in gallery.items() if key not in previous}
+    updated, notices = add_video_frames(remaining, frames)
+    for key, old in previous.items():
+        if key in updated:
+            updated[key]["categoria"] = old.get("categoria", "Detalle adicional")
+    return updated, notices
