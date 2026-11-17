@@ -7,6 +7,7 @@ from datetime import datetime
 
 from .core import ASSETS, MAX_PHOTOS, MAX_TOTAL_PHOTO_BYTES, combine_findings, validate_damage_findings
 from .vision import DEFAULT_API_BASE, PROMPT_VERSION, SCHEMA_VERSION, inspect_image, unique_photo_hashes
+from .usage_limits import QuotaExceeded
 
 
 def photo_fingerprint(photos, photo_categories=None, origins=None):
@@ -36,7 +37,8 @@ def analysis_is_current(analysis, signature, model, base_url=DEFAULT_API_BASE):
 
 
 def analyze_photos(asset, photos, *, api_key, model, cache=None, force=False,
-                    progress=None, inspector=None, base_url=DEFAULT_API_BASE, photo_categories=None, origins=None):
+                    progress=None, inspector=None, base_url=DEFAULT_API_BASE, photo_categories=None, origins=None,
+                    before_api_call=None):
     """Reutiliza cada foto sin cambios; solo un reanálisis explícito fuerza la API."""
     if asset not in ASSETS or not photos:
         raise ValueError("Selecciona un activo válido y al menos una foto.")
@@ -56,6 +58,8 @@ def analyze_photos(asset, photos, *, api_key, model, cache=None, force=False,
             category = photo_categories.get(name, "Detalle adicional")
             key = (asset, name, digest, category, model, base_url, PROMPT_VERSION, SCHEMA_VERSION)
             if force or key not in cache:
+                if before_api_call is not None:
+                    before_api_call()
                 result = inspector(raw, asset, category, model=model, api_key=api_key, base_url=base_url)
                 if not result.get("hallazgos"):
                     raise RuntimeError("La respuesta no contiene criterios válidos; vuelve a intentarlo.")
@@ -86,9 +90,11 @@ def analyze_photos(asset, photos, *, api_key, model, cache=None, force=False,
                                   "hallazgos": result["hallazgos"], "danos": details,
                                   "origen": dict((origins or {}).get(name, {"tipo": "foto"}))})
         except Exception as exc:
-            # Una foto fallida no invalida las otras, ni se reutiliza como éxito.
+            # Si agotamos la cuota, no hacer más consultas de fotos.
             failures.append(f"{name}: {exc}")
             detail_complete = False
+            if isinstance(exc, QuotaExceeded):
+                break
         if progress:
             progress((index + 1) / len(photos), name)
     statuses, evidence = combine_findings(asset, analyses)
