@@ -331,6 +331,8 @@ with st.expander("Detección local con YOLO (opcional)"):
         metrics = card["test_fixed_threshold"]
         st.warning("Modelo experimental: puede omitir residuos y producir falsas alarmas. No está validado en terrenos locales ni para decisiones técnicas o crediticias.")
         st.caption(f"Prueba del piloto: mAP50 {card['test']['mAP50']:.1%}; precisión {metrics['precision']:.1%} y recall {metrics['recall']:.1%} a confianza 0,35 e IoU 0,50. No son una garantía de precisión en tu terreno.")
+        if card.get("onnx_export"):
+            st.caption("Estas métricas corresponden al modelo PyTorch original; la conversión ONNX se comprueba funcionalmente, pero requiere evaluación independiente de precisión.")
         accepted = st.checkbox("Entiendo que YOLO es experimental y solo detecta residuos", key=f"yolo_ack_{asset}_{active_weights_hash}")
     else:
         accepted = False
