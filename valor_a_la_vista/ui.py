@@ -341,7 +341,7 @@ def score_panel(score, coverage, verified, total, category, partial=False):
     return ('<section class="vav-score">'
             f'<div class="vav-score-gauge">{score_gauge(score, coverage, partial)}</div>'
             '<div class="vav-score-body">'
-            '<p class="vav-score-eyebrow">Lectura preliminar</p>'
+            f'<p class="vav-score-eyebrow">{"Lectura parcial · criterios pendientes" if partial or coverage < 100 else "Lectura preliminar"}</p>'
             f'<p class="vav-score-category">{escape(str(category))}</p>'
             '<dl class="vav-ledger">'
             f'<div><dt>Cobertura ponderada</dt><dd>{coverage:.0f} %</dd></div>'
