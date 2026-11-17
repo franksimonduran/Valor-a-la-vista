@@ -319,7 +319,7 @@ has_results = bool(analysis and analysis["analizadas"])
 
 local_detections = st.session_state.get(f"yolo_{asset}", {})
 card = detector_card()
-active_weights_hash = card["weights_sha256"] if card else None
+active_weights_hash = (card.get("onnx_export", {}).get("sha256") or card["weights_sha256"]) if card else None
 if (local_detections.get("signature") != signature
         or local_detections.get("sha256_pesos") != active_weights_hash):
     local_detections = {}
