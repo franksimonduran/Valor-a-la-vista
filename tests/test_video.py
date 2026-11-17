@@ -9,7 +9,7 @@ import cv2
 import numpy as np
 
 from valor_a_la_vista.video import extract_video_frames, timestamp
-from valor_a_la_vista.gallery import add_video_frames, inspection_inputs, media_origins
+from valor_a_la_vista.gallery import add_video_frames, replace_video_frames, inspection_inputs, media_origins
 from valor_a_la_vista.inspection import analyze_photos, photo_fingerprint
 
 
@@ -114,3 +114,18 @@ class VideoTests(unittest.TestCase):
         second, notes = add_video_frames(first, frames)
         self.assertEqual(len(first), len(second))
         self.assertTrue(notes)
+
+    def test_video_replacement_preserves_unrelated_media(self):
+        raw = make_video(self.directory)
+        first, _ = extract_video_frames(raw, "terreno.avi", max_frames=4)
+        smaller, _ = extract_video_frames(raw, "terreno.avi", max_frames=2)
+        gallery, _ = add_video_frames({}, first)
+        photo = {"nombre": "independiente.jpg", "raw": b"original", "categoria": "Detalle adicional",
+                 "origen": {"tipo": "foto"}}
+        gallery["foto_independiente"] = photo
+        digest = hashlib.sha256(raw).hexdigest()
+        updated, _ = replace_video_frames(gallery, smaller, digest)
+        self.assertEqual(len(updated), len(smaller) + 1)
+        self.assertEqual(updated["foto_independiente"], photo)
+        again, _ = replace_video_frames(updated, smaller, digest)
+        self.assertEqual(len(again), len(updated))
