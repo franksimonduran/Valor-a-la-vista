@@ -4,12 +4,22 @@ from __future__ import annotations
 import hashlib
 import io
 import math
+import os
 import tempfile
 from pathlib import Path
 
 from PIL import Image
 
-MAX_VIDEO_BYTES = 100 * 1024 * 1024
+def _video_limit_mb():
+    """Limita la carga por despliegue; nunca permite aumentar el tope máximo."""
+    try:
+        requested = int(os.environ.get("VAV_MAX_VIDEO_MB", "100"))
+    except ValueError:
+        requested = 100
+    return min(100, max(5, requested))
+
+
+MAX_VIDEO_BYTES = _video_limit_mb() * 1024 * 1024
 MAX_VIDEO_SECONDS = 60
 MAX_VIDEO_FRAMES = 12
 MAX_VIDEO_PIXELS = 3840 * 2160
@@ -26,7 +36,7 @@ def timestamp(seconds):
 
 def extract_video_frames(raw, filename, *, max_frames=8):
     if not raw or len(raw) > MAX_VIDEO_BYTES:
-        raise ValueError("Video vacío o demasiado grande; máximo 100 MB.")
+        raise ValueError(f"Video vacío o demasiado grande; máximo {MAX_VIDEO_BYTES // (1024 * 1024)} MB.")
     name = str(filename).replace("\\", "/").rsplit("/", 1)[-1][:160]
     suffix = Path(name).suffix.lower()
     if suffix not in VIDEO_SUFFIXES:

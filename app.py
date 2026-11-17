@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
+import os
 import threading
 from datetime import date
 from pathlib import Path
@@ -32,7 +34,7 @@ from valor_a_la_vista.inspection import (
 )
 from valor_a_la_vista.online_prices import search_repair_references
 from valor_a_la_vista.gallery import add_photos, add_video_frames, inspection_inputs, media_origins
-from valor_a_la_vista.video import extract_video_frames, MAX_VIDEO_FRAMES
+from valor_a_la_vista.video import extract_video_frames, MAX_VIDEO_FRAMES, MAX_VIDEO_BYTES
 from valor_a_la_vista.detector import detector_status, detector_card, load_terrain_detector, detect_regions, annotated_image
 from valor_a_la_vista.report import build_report_data, html_report, report_digest
 from valor_a_la_vista import ui
@@ -57,6 +59,26 @@ st.set_page_config(
 )
 
 st.markdown(ui.styles(active_mode()), unsafe_allow_html=True)
+
+
+def ai_access_granted():
+    """Restringe las consultas de IA con coste sin ocultar la interfaz pública."""
+    required = os.getenv("APP_REQUIRE_PASSWORD", "").strip().lower() in {"1", "true", "yes"}
+    expected = os.getenv("APP_ACCESS_PASSWORD", "")
+    if not expected:
+        if required:
+            with st.sidebar:
+                st.warning("IA deshabilitada: configura APP_ACCESS_PASSWORD en Render.")
+            return False
+        return True
+    with st.sidebar:
+        supplied = st.text_input("Contraseña para habilitar IA", type="password", key="vav_ai_access")
+        allowed = hmac.compare_digest(supplied, expected)
+        st.caption("IA habilitada en esta sesión." if allowed else "Las consultas de IA requieren contraseña.")
+        return allowed
+
+
+ai_access = ai_access_granted()
 
 
 def cached_report_image(raw):
@@ -153,9 +175,9 @@ elif source == "Cámara":
     if selected is not None:
         uploads = [(selected.name, selected.getvalue())]
 else:
-    st.caption("Video corto de un mismo terreno: MP4, MOV, AVI o WebM, máximo 60 segundos, 100 MB y resolución 4K. No se analiza audio.")
+    st.caption(f"Video corto de un mismo terreno: MP4, MOV, AVI o WebM, máximo 60 segundos, {MAX_VIDEO_BYTES // (1024 * 1024)} MB y resolución 4K. No se analiza audio.")
     selected_video = st.file_uploader("Seleccionar video del terreno", type=["mp4", "mov", "avi", "webm"],
-                                     max_upload_size=100, key=f"video_{asset}_{upload_version}")
+                                     max_upload_size=MAX_VIDEO_BYTES // (1024 * 1024), key=f"video_{asset}_{upload_version}")
     frame_count = st.slider("Fotogramas a extraer", 1, MAX_VIDEO_FRAMES, 8, key=f"video_frames_{asset}")
     remaining = MAX_PHOTOS - len(stored)
     st.caption(f"Espacios disponibles para fotos y fotogramas: {remaining}. La extracción es local y no genera cargos de API.")
@@ -241,17 +263,19 @@ with st.expander("Qué daños se buscan"):
     st.caption("El catálogo guía la revisión, no garantiza detectar todos los daños. Usa tomas generales y detalles nítidos desde un lugar seguro; si falta evidencia se requiere otra foto o inspección.")
 analyze = st.button(
     "Analizar terreno", key="analyze", type="primary",
-    disabled=not photos or not api_key,
+    disabled=not photos or not api_key or not ai_access,
     help="Reutiliza las fotos ya analizadas; solo procesa fotos nuevas o fallidas."
 )
-reanalyze = st.button("Reanalizar todas las fotos", key="reanalyze", disabled=not analysis or not api_key,
+reanalyze = st.button("Reanalizar todas las fotos", key="reanalyze", disabled=not analysis or not api_key or not ai_access,
                       help="Fuerza nuevas llamadas a OpenAI y puede generar cargos.")
 if not photos:
     st.markdown(ui.callout("note", "Sube al menos una fotografía para habilitar el análisis."), unsafe_allow_html=True)
 elif not api_key:
     st.markdown(ui.callout("note", "Configura OPENAI_API_KEY para habilitar el análisis."), unsafe_allow_html=True)
+elif not ai_access:
+    st.markdown(ui.callout("warning", "Para analizar fotos, introduce la contraseña de IA en la barra lateral."), unsafe_allow_html=True)
 
-if (analyze or reanalyze) and photos and api_key:
+if (analyze or reanalyze) and photos and api_key and ai_access:
     run_analysis(asset, photos, api_key, model_name, force=reanalyze, photo_categories=photo_categories, base_url=base_url, origins=origins)
     analysis = st.session_state.get(f"analysis_{asset}")
 
@@ -362,13 +386,13 @@ else:
         st.link_button("Normas y documentos del MTC", "https://www.gob.pe/institucion/mtc/normas-legales")
         st.link_button("INEI: índices, no tarifas de reparación", "https://www.gob.pe/inei")
         search = st.button("Buscar precios en Internet", key="search_prices",
-                           disabled=not (damaged or damages) or not location.strip() or not api_key)
+                           disabled=not (damaged or damages) or not location.strip() or not api_key or not ai_access)
         refresh = st.button("Actualizar referencias", key="refresh_prices",
-                            disabled=not references or not api_key,
+                            disabled=not references or not api_key or not ai_access,
                             help="Hace una nueva consulta y puede generar cargos.")
         if not location.strip():
             st.caption("Indica distrito y ciudad para contextualizar la búsqueda.")
-        if search or refresh:
+        if (search or refresh) and ai_access:
             if refresh or not references:
                 references = {"signature": reference_signature, "web": None, "errors": []}
                 try:
@@ -460,7 +484,7 @@ else:
                     confirmed = st.checkbox(f"Contrasté el documento oficial, su vigencia, aplicabilidad y cantidad · {title}", key=prefix + "_confirmed")
                     quotes[code] = {"intervencion": intervention, "unidad": unit, "cantidad": quantity,
                                     "precio_min": low, "precio_max": high, "fuente": source,
-                                    "fecha": quoted_date.isoformat(), "nota": scope, "confirmado": confirmed,
+                                    "fecha": quoted_date.isoformat() if quoted_date else "", "nota": scope, "confirmado": confirmed,
                                     "url_fuente": source_url, "documento": document, "vigencia": validity,
                                     "tipo_referencia": reference_type, "zona_afectada": zone, "trabajos": stages,
                                     "revision_tecnica_confirmada": technical_review, "incluido_en": ""}

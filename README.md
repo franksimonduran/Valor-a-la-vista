@@ -101,3 +101,21 @@ Las pruebas usan imágenes sintéticas y respuestas simuladas. `scripts/evaluate
 - `.data/backups/antes-terrenos-20261116-165630.zip`: respaldo previo a la migración, sin configuración privada.
 
 Los módulos históricos de tarifas comerciales de paredes, presupuesto manual, simulación crediticia y segmentación no se usan en la interfaz. YOLO y segmentación son opcionales, no se descargan ni entrenan modelos al iniciar la app. Consulta `scripts/train_yolo.py --help` y los requisitos opcionales antes de entrenar; revisa licencias y utiliza datos autorizados. `.data/python/3.12` es el Python base local del entorno, no una caché para eliminar.
+
+
+## Despliegue en Render (Python 3.12)
+
+La rama principal `main` se despliega automáticamente en Render. Este prototipo utiliza Streamlit y no necesita Ollama ni un servidor de modelos local. La detección YOLO es opcional y no está preparada para el plan gratuito.
+
+- **Build:** `python -m pip install --upgrade pip && python -m pip install -r requirements.txt`
+- **Start:** `streamlit run app.py --server.address 0.0.0.0 --server.port $PORT --server.headless true --browser.gatherUsageStats false`
+- **`PYTHON_VERSION`:** `3.12.10`
+- **`OPENAI_API_KEY`:** clave privada (solo en Render → Environment; nunca en GitHub).
+- **`OPENAI_MODEL`:** `gpt-6.1-terra`, sujeto a acceso y saldo de la cuenta.
+- **`APP_REQUIRE_PASSWORD`:** `true` en un servicio público.
+- **`APP_ACCESS_PASSWORD`:** contraseña privada de acceso para permitir llamadas a la API. Sin ella y con `APP_REQUIRE_PASSWORD=true`, el análisis de IA queda bloqueado, pero la interfaz puede explorarse.
+- **`VAV_MAX_VIDEO_MB`:** `32` en Render Free para reducir el riesgo de agotar memoria; el máximo local predeterminado es 100 MB.
+
+En producción, `opencv-python-headless` evita dependencias de ventanas gráficas que no están disponibles en servidores. Los cambios en `main` pasan por GitHub Actions: pruebas unitarias y arranque HTTP sin consumir la API. Una compilación exitosa **no** demuestra precisión visual, disponibilidad de la API ni validez pericial.
+
+Render Free tiene disco temporal, una sola instancia y suspensión por inactividad. Las fotos viven en sesión y se pierden al reiniciar; descarga los informes antes de salir. Para uso público con usuarios reales deben añadirse autenticación robusta, consentimiento explícito, límites de consumo y almacenamiento seguro.
