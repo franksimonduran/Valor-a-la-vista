@@ -20,7 +20,7 @@ TERRAIN_CLASSES = tuple(code for code in DAMAGE_CATALOG["terreno"] if code != "o
 
 def detector_status():
     if not DEFAULT_WEIGHTS.is_file():
-        return False, "YOLO no activado: falta seleccionar y publicar el modelo evaluado (.data/models/terrenos/best.pt). El análisis con OpenAI sí está disponible."
+        return False, "YOLO no activado: falta seleccionar y publicar el modelo evaluado (.data/models/terrenos/best.pt). El análisis con OpenAI es independiente y requiere que la API tenga cuota y permisos disponibles."
     if importlib.util.find_spec("ultralytics") is None:
         return False, "Falta instalar requirements-yolo.txt para usar el detector local."
     try:
