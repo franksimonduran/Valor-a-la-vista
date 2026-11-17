@@ -205,32 +205,76 @@ def validate_api_base(base):
     return DEFAULT_API_BASE
 
 
+def _api_error(status, response):
+    """Clasifica los rechazos sin revelar la respuesta privada de OpenAI."""
+    try:
+        body = response.json()
+        error = body.get("error", {}) if isinstance(body, dict) else {}
+        if not isinstance(error, dict):
+            error = {}
+    except (ValueError, TypeError):
+        error = {}
+    code = str(error.get("code") or "").lower()
+    kind = str(error.get("type") or "").lower()
+    if status == 429:
+        if code in {"insufficient_quota", "billing_hard_limit_reached"} or kind == "insufficient_quota":
+            return "OpenAI rechazó la consulta por cuota o facturación; revisa saldo y límites de gasto en platform.openai.com/usage.", False
+        if code == "rate_limit_exceeded" or kind == "rate_limit_exceeded":
+            return "OpenAI limitó temporalmente las solicitudes (HTTP 429). Intenta otra vez después de un momento.", True
+        return "OpenAI devolvió HTTP 429; comprueba cuota, facturación y límites de velocidad.", False
+    if status == 401:
+        return "OpenAI rechazó la clave (HTTP 401); revisa OPENAI_API_KEY en Render.", False
+    if status == 403:
+        return "OpenAI denegó acceso (HTTP 403); revisa permisos del modelo o proyecto.", False
+    if status == 404:
+        return "OpenAI no encontró el recurso (HTTP 404); revisa OPENAI_MODEL.", False
+    if status == 400:
+        return "OpenAI rechazó la solicitud (HTTP 400); verifica el modelo y los parámetros.", False
+    return f"OpenAI devolvió HTTP {status}; revisa el servicio y la configuración.", False
+
+
 def post_openai(path, payload, *, api_key, base_url=DEFAULT_API_BASE):
-    """Transporte sin redirecciones y sin cuerpos de error con datos privados."""
+    """No reintenta solicitudes que fallan por facturación o saldo."""
     base = validate_api_base(base_url)
     if path not in {"chat/completions", "responses"}:
         raise ValueError("Ruta de API no permitida.")
     if not api_key:
-        raise RuntimeError("Falta OPENAI_API_KEY en config/config.py o en el entorno.")
+        raise RuntimeError("Falta OPENAI_API_KEY en el entorno privado del servidor.")
     try:
         for attempt in range(3):
             response = requests.post(base + "/" + path,
                                      headers={"Authorization": "Bearer " + api_key}, json=payload,
                                      timeout=(10, 90), allow_redirects=False)
-            if response.status_code not in (429, 500, 502, 503, 504) or attempt == 2:
-                break
-            time.sleep(2 ** attempt)
-        if 300 <= response.status_code < 400:
-            raise RuntimeError("La API redirigió la petición; no se reenvió la clave.")
-        response.raise_for_status()
-        body = response.json()
-        if not isinstance(body, dict):
-            raise ValueError
-        return body
+            status = response.status_code
+            if 300 <= status < 400:
+                raise RuntimeError("La API redirigió la petición; no se reenvió la clave.")
+            if status == 429:
+                message, temporary = _api_error(status, response)
+                if temporary and attempt < 2:
+                    headers = getattr(response, "headers", {})
+                    raw_delay = headers.get("Retry-After", "") if hasattr(headers, "get") else ""
+                    try:
+                        delay = max(1.0, min(6.0, float(raw_delay)))
+                    except (ValueError, TypeError):
+                        delay = float(2 ** attempt)
+                    time.sleep(delay)
+                    continue
+                raise RuntimeError(message)
+            if status in (500, 502, 503, 504) and attempt < 2:
+                time.sleep(2 ** attempt)
+                continue
+            if status >= 400:
+                message, _ = _api_error(status, response)
+                raise RuntimeError(message)
+            response.raise_for_status()
+            body = response.json()
+            if not isinstance(body, dict):
+                raise ValueError
+            return body
     except requests.exceptions.Timeout:
         raise RuntimeError("OpenAI agotó el tiempo de espera.") from None
     except requests.exceptions.HTTPError:
-        raise RuntimeError(f"OpenAI devolvió HTTP {response.status_code}; revisa clave, modelo, permisos y cuota.") from None
+        raise RuntimeError("OpenAI devolvió un error HTTP inesperado.") from None
     except requests.exceptions.RequestException:
         raise RuntimeError("No se pudo conectar con OpenAI.") from None
     except ValueError:
