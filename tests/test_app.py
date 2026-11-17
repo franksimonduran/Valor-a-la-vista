@@ -75,19 +75,34 @@ class AppTests(unittest.TestCase):
         self.assertFalse(app.exception)
         self.assertEqual(len(app.session_state["gallery_terreno"]), 4)
 
-    def test_uploads_require_explicit_add_and_do_not_analyze(self):
+    def test_first_uploaded_photo_is_ready_without_extra_step_or_api_call(self):
         out = io.BytesIO()
         Image.new("RGB", (640, 480), "green").save(out, format="PNG")
         out.name = "nueva.png"
         with patch("streamlit.file_uploader", return_value=[out]), patch("valor_a_la_vista.inspection.inspect_image") as inspector:
             app = self.app()
-            self.assertEqual(app.session_state["gallery_terreno"], {})
-            next(b for b in app.button if b.label == "Añadir imágenes al terreno").click().run()
+            self.assertFalse(app.exception)
+            self.assertEqual(len(app.session_state["gallery_terreno"]), 1)
+            self.assertFalse(app.button(key="analyze").disabled)
+            inspector.assert_not_called()
+            app.run()
             self.assertFalse(app.exception)
             self.assertEqual(len(app.session_state["gallery_terreno"]), 1)
             inspector.assert_not_called()
-            next(b for b in app.button if b.label == "Añadir imágenes al terreno").click().run()
+
+    def test_first_camera_photo_is_ready_without_extra_step(self):
+        out = io.BytesIO()
+        Image.new("RGB", (640, 480), "green").save(out, format="PNG")
+        out.name = "camara.png"
+        with patch("streamlit.camera_input", return_value=out), patch("valor_a_la_vista.inspection.inspect_image") as inspector:
+            app = self.app()
+            app.radio(key="source_terreno").set_value("Cámara").run()
+            self.assertFalse(app.exception)
             self.assertEqual(len(app.session_state["gallery_terreno"]), 1)
+            self.assertFalse(app.button(key="analyze").disabled)
+            app.run()
+            self.assertEqual(len(app.session_state["gallery_terreno"]), 1)
+            inspector.assert_not_called()
 
     def test_single_photo_with_no_guided_views_can_be_analyzed(self):
         def inspect_first(raw, asset, shot_name, **kwargs):
@@ -122,11 +137,12 @@ class AppTests(unittest.TestCase):
              patch("valor_a_la_vista.inspection.inspect_image", side_effect=self.inspect_photo) as inspector:
             app = self.app()
             app.radio(key="source_terreno").set_value("Video").run()
-            extract.assert_not_called()
-            app.button(key="prepare_video").click().run()
             self.assertFalse(app.exception)
             self.assertEqual(extract.call_count, 1)
             self.assertEqual(len(app.session_state["gallery_terreno"]), 1)
+            self.assertFalse(app.button(key="analyze").disabled)
+            app.run()
+            self.assertEqual(extract.call_count, 1)
             inspector.assert_not_called()
             next(item for item in app.selectbox if item.key.startswith("category_terreno_")).set_value("Superficie").run()
             app.button(key="analyze").click().run()

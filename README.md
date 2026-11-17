@@ -25,7 +25,7 @@ El modelo debe estar habilitado en tu cuenta y tener cuota de API; una suscripci
 
 ## Uso
 
-1. Selecciona **una o varias fotos** y pulsa **Añadir imágenes al terreno**. Desde la primera foto puedes pulsar **Analizar terreno** sin completar vistas guiadas, área, ubicación ni precios. Puedes añadir más fotos después o usar la cámara sin perder las anteriores. Cada inspección corresponde a un mismo terreno. La galería vive en memoria durante la sesión, no en una base de datos.
+1. Selecciona **una foto o varias** desde tu dispositivo o cámara. Se agregan inmediatamente a la galería y, desde la primera, puedes pulsar **Analizar terreno**, sin completar vistas guiadas, área, ubicación ni precios. Agregar imágenes no llama a la API. Cada inspección corresponde a un mismo terreno. La galería vive en memoria durante la sesión, no en una base de datos.
 2. Asigna vistas: **Panorámica, Acceso, Superficie, Límites**; añade tantos detalles como necesites hasta **16 fotos, 12 MB cada una y 64 MB totales**. Admite JPEG, PNG y WebP de hasta 25 megapíxeles. Puedes quitar cada foto. Las copias exactas se rechazan; las similitudes son solo avisos.
 3. Declara ubicación y, opcionalmente, área total como contexto. **No se usa el área total como cantidad dañada**. Las fotos no acreditan propiedad, linderos, área real, suelo estable, servicios ni aptitud para construir.
 4. Pulsa **Analizar terreno**: autoriza enviar las imágenes a OpenAI, con posibles cargos. Se eliminan EXIF/metadatos y se normalizan las imágenes antes de enviarlas. Solo se procesan fotos nuevas o fallidas. **Reanalizar todas las fotos** fuerza nuevas consultas. Subir o quitar fotos no dispara consultas.
@@ -37,9 +37,9 @@ El modelo debe estar habilitado en tu cuenta y tener cuota de API; una suscripci
 
 ## Videos y YOLO
 
-- Selecciona **Añadir desde → Video**, carga MP4, MOV, AVI o WebM de hasta **60 s, 100 MB y 4K**, y pulsa **Preparar fotogramas del video**. OpenCV debe poder decodificar el códec; MP4 H.264 es una opción recomendada.
+- Selecciona **Añadir desde → Video**, carga MP4, MOV, AVI o WebM de hasta **60 s, 100 MB y 4K**, y se preparan automáticamente los fotogramas, sin requerir otras fotografías ni llamar todavía a la API. OpenCV debe poder decodificar el códec; MP4 H.264 es una opción recomendada.
 - Se extraen entre **1 y 12 fotogramas** distribuidos en el video, limitados también por los espacios de la galería (máximo 16 fotos/fotogramas y 64 MB en total). No se analiza audio ni todos los fotogramas: pueden omitirse daños entre capturas. Los tiempos son aproximados, calculados por índice/fps.
-- Revisa y elimina capturas antes de **Analizar terreno**. Solo esas imágenes se envían a OpenAI, no el video ni su audio. La extracción no genera cargos de API y elimina su archivo temporal local. La API puede generar hasta una consulta por imagen nueva. Las capturas repetidas exactas se descartan.
+- Con al menos un fotograma listo se habilita **Analizar terreno**; revisa o elimina capturas antes de pulsarlo. Solo esas imágenes se envían a OpenAI, no el video ni su audio. La extracción no genera cargos de API y elimina su archivo temporal local. La API puede generar hasta una consulta por imagen nueva. Las capturas repetidas exactas se descartan.
 - El informe conserva nombre y SHA-256 del video, índice de fotograma y tiempo aproximado por hallazgo. Varios momentos del mismo daño no son más m²: agrúpalos antes de presupuestar.
 - **Detección local con YOLO** es complementaria y opcional: solo se habilita con `requirements-yolo.txt` y pesos propios y confiables en `.data/models/terrenos/best.pt`. No se descargan pesos al iniciar, ni se presenta un YOLO genérico como detector entrenado de daños.
 - Sus clases deben coincidir con las de terrenos. Las cajas son coordenadas normalizadas, no superficies reales. Sus confianzas no están calibradas como probabilidad de daño; **no modifican automáticamente score, recomendaciones ni presupuesto**. Una salida vacía no certifica terreno sano.

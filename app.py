@@ -159,7 +159,7 @@ with st.sidebar:
     st.markdown(ui.sidebar_footer(), unsafe_allow_html=True)
 
 spec = ASSETS[asset]
-st.markdown(ui.section_header(1, "Fotos y videos", "Una sola imagen basta para comenzar: no necesitas completar las cuatro vistas."), unsafe_allow_html=True)
+st.markdown(ui.section_header(1, "Fotos y videos", "Carga una foto o un video y podrás inspeccionarlo sin completar varias vistas."), unsafe_allow_html=True)
 st.caption("Un solo terreno por inspección. Hasta 16 fotos, 12 MB por foto y 64 MB en total; JPEG, PNG o WebP. Evita personas y documentos.")
 st.caption("Vistas guiadas: " + " · ".join(f"{name}: {instruction}" for name, instruction in spec["fotos"]))
 stored = st.session_state.setdefault(f"gallery_{asset}", {})
@@ -181,26 +181,46 @@ else:
     frame_count = st.slider("Fotogramas a extraer", 1, MAX_VIDEO_FRAMES, 8, key=f"video_frames_{asset}")
     remaining = MAX_PHOTOS - len(stored)
     st.caption(f"Espacios disponibles para fotos y fotogramas: {remaining}. La extracción es local y no genera cargos de API.")
-    if st.button("Preparar fotogramas del video", key="prepare_video", disabled=selected_video is None or remaining < 1):
-        try:
-            with st.spinner("Extrayendo fotogramas localmente..."):
-                frames, notes = extract_video_frames(selected_video.getvalue(), selected_video.name,
-                                                      max_frames=min(frame_count, remaining))
-                stored, notices = add_video_frames(stored, frames)
-            st.session_state[f"gallery_{asset}"] = stored
-            st.session_state[f"upload_notices_{asset}"] = [*notes, *notices]
-            st.session_state[f"upload_version_{asset}"] = upload_version + 1
-            st.rerun()
-        except (ValueError, RuntimeError, OSError) as exc:
-            st.error(str(exc))
+    video_selection_key = f"video_selection_{asset}"
+    if selected_video is None:
+        st.session_state.pop(video_selection_key, None)
+    else:
+        # La extracción local ocurre una vez por archivo/cantidad, sin consultar ni cobrar la API.
+        video_bytes = selected_video.getvalue()
+        selection = (hashlib.sha256(video_bytes).hexdigest(), frame_count)
+        if st.session_state.get(video_selection_key) != selection:
+            st.session_state[video_selection_key] = selection
+            if remaining < 1:
+                st.session_state[f"upload_notices_{asset}"] = [
+                    "La galería está llena: quita una fotografía para preparar el video."
+                ]
+            else:
+                try:
+                    with st.spinner("Preparando fotogramas del video..."):
+                        frames, notes = extract_video_frames(video_bytes, selected_video.name,
+                                                            max_frames=min(frame_count, remaining))
+                        stored, notices = add_video_frames(stored, frames)
+                    st.session_state[f"gallery_{asset}"] = stored
+                    st.session_state[f"upload_notices_{asset}"] = [*notes, *notices]
+                except (ValueError, RuntimeError, OSError) as exc:
+                    st.session_state[f"upload_notices_{asset}"] = [f"Video no procesado: {exc}"]
 
-if source != "Video" and uploads:
-    if st.button("Añadir imágenes al terreno", key=f"add_uploads_{asset}"):
-        stored, notices = add_photos(stored, uploads)
-        st.session_state[f"gallery_{asset}"] = stored
-        st.session_state[f"upload_notices_{asset}"] = notices
-        st.session_state[f"upload_version_{asset}"] = upload_version + 1
-        st.rerun()
+if source != "Video":
+    # Guardar desde la primera toma, sin botón extra ni recargas infinitas.
+    upload_selection_key = f"upload_selection_{asset}_{source}"
+    if not uploads:
+        st.session_state.pop(upload_selection_key, None)
+    else:
+        fingerprint = hashlib.sha256()
+        for name, raw in uploads:
+            fingerprint.update(str(name).encode("utf-8", errors="replace"))
+            fingerprint.update(hashlib.sha256(raw).digest())
+        selection = fingerprint.hexdigest()
+        if st.session_state.get(upload_selection_key) != selection:
+            st.session_state[upload_selection_key] = selection
+            stored, notices = add_photos(stored, uploads)
+            st.session_state[f"gallery_{asset}"] = stored
+            st.session_state[f"upload_notices_{asset}"] = notices
 for notice in st.session_state.get(f"upload_notices_{asset}", []):
     st.warning(notice)
 categories = ["Detalle adicional", *[name for name, _ in spec["fotos"]]]
@@ -258,7 +278,7 @@ if not analysis_is_current(analysis, signature, model_name, base_url):
     analysis = None
 
 st.markdown(ui.section_header(2, "Análisis", "Propuesta automática de OpenAI; sin revisión humana."), unsafe_allow_html=True)
-st.caption(f"Puedes analizar desde la primera imagen. Al presionar Analizar terreno, autorizas enviar estas {len(photos)} fotos/fotogramas a OpenAI (hasta una consulta por imagen nueva). Puede generar cargos. No se envían video ni audio; la búsqueda web se solicita aparte.")
+st.caption(f"Desde la primera foto o los primeros fotogramas del video puedes analizar. Al pulsar Analizar terreno, autorizas enviar {len(photos)} foto(s)/fotograma(s) a OpenAI (hasta una consulta por imagen nueva). Puede generar cargos. El video y el audio no se envían.")
 with st.expander("Qué daños se buscan"):
     st.write("; ".join(spec.nombre for spec in DAMAGE_CATALOG[asset].values()))
     st.caption("El catálogo guía la revisión, no garantiza detectar todos los daños. Usa tomas generales y detalles nítidos desde un lugar seguro; si falta evidencia se requiere otra foto o inspección.")
@@ -270,7 +290,7 @@ analyze = st.button(
 reanalyze = st.button("Reanalizar todas las fotos", key="reanalyze", disabled=not analysis or not api_key or not ai_access,
                       help="Fuerza nuevas llamadas a OpenAI y puede generar cargos.")
 if not photos:
-    st.markdown(ui.callout("note", "Sube al menos una fotografía para habilitar el análisis."), unsafe_allow_html=True)
+    st.markdown(ui.callout("note", "Selecciona una fotografía o un video: una sola toma es suficiente para comenzar. El análisis requiere que se prepare al menos un fotograma del video."), unsafe_allow_html=True)
 elif not api_key:
     st.markdown(ui.callout("note", "Configura OPENAI_API_KEY para habilitar el análisis."), unsafe_allow_html=True)
 elif not ai_access:
