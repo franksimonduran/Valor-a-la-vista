@@ -58,6 +58,11 @@ st.set_page_config(
     layout="wide", initial_sidebar_state="expanded"
 )
 
+# Elimina únicamente el parámetro publicitario añadido a enlaces de ChatGPT.
+# Conserva cualquier otro parámetro que la aplicación pueda necesitar.
+if st.query_params.get("utm_source") == "chatgpt.com":
+    del st.query_params["utm_source"]
+
 st.markdown(ui.styles(active_mode()), unsafe_allow_html=True)
 
 
