@@ -14,6 +14,9 @@ from valor_a_la_vista.vision import DEFAULT_API_BASE
 
 class AppTests(unittest.TestCase):
     def setUp(self):
+        generous_limits = patch.dict("os.environ", {"VAV_DAILY_API_LIMIT": "10000", "VAV_SESSION_API_LIMIT": "10000"})
+        generous_limits.start()
+        self.addCleanup(generous_limits.stop)
         for target, kwargs in (("requests.post", {"side_effect": AssertionError("Red bloqueada")}),
                                ("requests.get", {"side_effect": AssertionError("Red bloqueada")}),
                                ("valor_a_la_vista.vision.openai_config", {"return_value": ("test", "gpt-test", DEFAULT_API_BASE)})):
