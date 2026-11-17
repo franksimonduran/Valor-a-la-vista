@@ -41,10 +41,10 @@ El modelo debe estar habilitado en tu cuenta y tener cuota de API; una suscripci
 - Se extraen entre **1 y 12 fotogramas** distribuidos en el video, limitados también por los espacios de la galería (máximo 16 fotos/fotogramas y 64 MB en total). No se analiza audio ni todos los fotogramas: pueden omitirse daños entre capturas. Los tiempos son aproximados, calculados por índice/fps.
 - Con al menos un fotograma listo se habilita **Analizar terreno**; revisa o elimina capturas antes de pulsarlo. Solo esas imágenes se envían a OpenAI, no el video ni su audio. La extracción no genera cargos de API y elimina su archivo temporal local. La API puede generar hasta una consulta por imagen nueva. Las capturas repetidas exactas se descartan.
 - El informe conserva nombre y SHA-256 del video, índice de fotograma y tiempo aproximado por hallazgo. Varios momentos del mismo daño no son más m²: agrúpalos antes de presupuestar.
-- **Detección local con YOLO** es complementaria y opcional: solo se habilita con `requirements-yolo.txt` y pesos propios y confiables en `.data/models/terrenos/best.pt`. No se descargan pesos al iniciar, ni se presenta un YOLO genérico como detector entrenado de daños.
+- **Detección con YOLO** es complementaria y experimental. Localmente admite pesos evaluados `.data/models/terrenos/best.pt` con `requirements-yolo.txt`. En Render Free prioriza la exportación ONNX verificada `assets/models/terrenos/best.onnx` y `model_card.json`, usando OpenCV DNN (ya instalado), sin PyTorch.
 - Sus clases deben coincidir con las de terrenos. Las cajas son coordenadas normalizadas, no superficies reales. Sus confianzas no están calibradas como probabilidad de daño; **no modifican automáticamente score, recomendaciones ni presupuesto**. Una salida vacía no certifica terreno sano.
 
-**Entrenamiento pendiente:** ya se descargó un piloto público de TACO para residuos con anotaciones de origen; no hay pesos de terrenos ni un dataset validado de todos los daños. Véase [Preparar el entrenamiento](docs/entrenamiento_terrenos.md). Entrenar YOLO es distinto de usar la API de OpenAI.
+**Entrenamiento experimental de residuos terminado localmente:** el usuario verificó `residuos_yolo11n_piloto_20261116_v1` (21 épocas, mAP50 0,5681, precisión 0,8167 y recall 0,5052). El hash de los pesos coincide con la ficha. Falta convertir y publicar su versión ONNX en Render; no está validado para uso real. Véase [Preparar el entrenamiento](docs/entrenamiento_terrenos.md). Entrenar YOLO es distinto de usar la API de OpenAI.
 
 Se ha lanzado el experimento local `residuos_yolo11n_piloto_20261116_v1` (YOLO11 nano, CPU, hasta 30 épocas). Su estado y, al finalizar, sus métricas estarán en `.data/runs/residuos_yolo11n_piloto_20261116_v1/training_report.json`. No activa ni reemplaza automáticamente los pesos de la app. Las dependencias opcionales quedan fijadas en `requirements-yolo-lock.txt`.
 
@@ -129,3 +129,45 @@ Render Free tiene disco temporal, una sola instancia y suspensión por inactivid
 - La selección de un video extrae fotogramas localmente. Cambiar la cantidad sustituye las capturas de ese mismo video, sin borrar fotos independientes. Si falla, aparece **Reintentar extracción del video**.
 - Con una sola foto válida o un fotograma válido se puede comenzar la inspección. Si no hay cobertura completa, el panel indica expresamente que la lectura es parcial.
 - Ninguna prueba automática sustituye evaluar la calidad del análisis sobre fotografías reales y contrastarlas con un especialista.
+
+## Publicar el modelo experimental YOLO11n en Render Free
+
+El ZIP de origen verificado contiene **best.pt** y **model_card.json**. Por seguridad
+y memoria no se publica el checkpoint PyTorch en el servidor. Se convierte a ONNX
+en el equipo del propietario, y Render usa OpenCV DNN, sin cargar PyTorch.
+
+Con PowerShell en la raíz del proyecto, después de guardar cambios locales:
+
+```powershell
+git switch main
+git pull --ff-only origin main
+.\.venv\Scripts\python.exe -m pip install onnx
+.\.venv\Scripts\python.exe -B scripts\export_yolo_onnx.py
+```
+
+El exportador verifica el SHA-256 del checkpoint local, exige la clase única
+`residuos`, exporta ONNX con imgsz=416, opset=12, lote fijo 1 y NMS externa.
+Después ejecuta una inferencia de prueba en OpenCV y prepara dos archivos:
+
+- `assets/models/terrenos/best.onnx`
+- `assets/models/terrenos/model_card.json` (incluye `onnx_export.sha256`)
+
+Si falla la exportación o la inferencia, **no publiques los archivos**.
+No borra ni reemplaza el `.pt` original. Si faltan dependencias opcionales,
+revísalas únicamente en la computadora de entrenamiento, nunca en Render.
+
+Para publicar solo estos dos artefactos verificados:
+
+```powershell
+git add assets/models/terrenos/best.onnx assets/models/terrenos/model_card.json
+git commit -m "Publicar modelo experimental YOLO11n ONNX para Render"
+git push origin main
+```
+
+Render actualizará la rama `main`. El detector comprueba el hash ONNX y
+utiliza el OpenCV ya instalado. Con 512 MB de RAM se debe hacer una prueba
+**real** de inferencia y consumo antes de afirmar que la ejecución es estable.
+Las métricas de precisión corresponden al checkpoint PyTorch original;
+el ONNX requiere revalidación independiente de precisión.
+Solo detecta residuos, no maleza, agua ni erosión. Respetar licencias
+de Ultralytics y TACO antes de ofrecer el detector comercialmente.
