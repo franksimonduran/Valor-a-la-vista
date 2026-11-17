@@ -2,9 +2,7 @@
 from __future__ import annotations
 
 import hashlib
-import hmac
 import json
-import os
 import threading
 from datetime import date
 from pathlib import Path
@@ -64,26 +62,6 @@ if st.query_params.get("utm_source") == "chatgpt.com":
     del st.query_params["utm_source"]
 
 st.markdown(ui.styles(active_mode()), unsafe_allow_html=True)
-
-
-def ai_access_granted():
-    """Restringe las consultas de IA con coste sin ocultar la interfaz pública."""
-    required = os.getenv("APP_REQUIRE_PASSWORD", "").strip().lower() in {"1", "true", "yes"}
-    expected = os.getenv("APP_ACCESS_PASSWORD", "")
-    if not expected:
-        if required:
-            with st.sidebar:
-                st.warning("IA deshabilitada: configura APP_ACCESS_PASSWORD en Render.")
-            return False
-        return True
-    with st.sidebar:
-        supplied = st.text_input("Contraseña para habilitar IA", type="password", key="vav_ai_access")
-        allowed = hmac.compare_digest(supplied, expected)
-        st.caption("IA habilitada en esta sesión." if allowed else "Las consultas de IA requieren contraseña.")
-        return allowed
-
-
-ai_access = ai_access_granted()
 
 
 def cached_report_image(raw):
@@ -289,19 +267,17 @@ with st.expander("Qué daños se buscan"):
     st.caption("El catálogo guía la revisión, no garantiza detectar todos los daños. Usa tomas generales y detalles nítidos desde un lugar seguro; si falta evidencia se requiere otra foto o inspección.")
 analyze = st.button(
     "Analizar terreno", key="analyze", type="primary",
-    disabled=not photos or not api_key or not ai_access,
+    disabled=not photos or not api_key,
     help="Reutiliza las fotos ya analizadas; solo procesa fotos nuevas o fallidas."
 )
-reanalyze = st.button("Reanalizar todas las fotos", key="reanalyze", disabled=not analysis or not api_key or not ai_access,
+reanalyze = st.button("Reanalizar todas las fotos", key="reanalyze", disabled=not analysis or not api_key,
                       help="Fuerza nuevas llamadas a OpenAI y puede generar cargos.")
 if not photos:
     st.markdown(ui.callout("note", "Selecciona una fotografía o un video: una sola toma es suficiente para comenzar. El análisis requiere que se prepare al menos un fotograma del video."), unsafe_allow_html=True)
 elif not api_key:
     st.markdown(ui.callout("note", "Configura OPENAI_API_KEY para habilitar el análisis."), unsafe_allow_html=True)
-elif not ai_access:
-    st.markdown(ui.callout("warning", "Para analizar fotos, introduce la contraseña de IA en la barra lateral."), unsafe_allow_html=True)
 
-if (analyze or reanalyze) and photos and api_key and ai_access:
+if (analyze or reanalyze) and photos and api_key:
     run_analysis(asset, photos, api_key, model_name, force=reanalyze, photo_categories=photo_categories, base_url=base_url, origins=origins)
     analysis = st.session_state.get(f"analysis_{asset}")
 
@@ -412,13 +388,13 @@ else:
         st.link_button("Normas y documentos del MTC", "https://www.gob.pe/institucion/mtc/normas-legales")
         st.link_button("INEI: índices, no tarifas de reparación", "https://www.gob.pe/inei")
         search = st.button("Buscar precios en Internet", key="search_prices",
-                           disabled=not (damaged or damages) or not location.strip() or not api_key or not ai_access)
+                           disabled=not (damaged or damages) or not location.strip() or not api_key)
         refresh = st.button("Actualizar referencias", key="refresh_prices",
-                            disabled=not references or not api_key or not ai_access,
+                            disabled=not references or not api_key,
                             help="Hace una nueva consulta y puede generar cargos.")
         if not location.strip():
             st.caption("Indica distrito y ciudad para contextualizar la búsqueda.")
-        if (search or refresh) and ai_access:
+        if search or refresh:
             if refresh or not references:
                 references = {"signature": reference_signature, "web": None, "errors": []}
                 try:

@@ -112,8 +112,7 @@ La rama principal `main` se despliega automáticamente en Render. Este prototipo
 - **`PYTHON_VERSION`:** `3.12.10`
 - **`OPENAI_API_KEY`:** clave privada (solo en Render → Environment; nunca en GitHub).
 - **`OPENAI_MODEL`:** `gpt-6.1-terra`, sujeto a acceso y saldo de la cuenta.
-- **`APP_REQUIRE_PASSWORD`:** `true` en un servicio público.
-- **`APP_ACCESS_PASSWORD`:** contraseña privada de acceso para permitir llamadas a la API. Sin ella y con `APP_REQUIRE_PASSWORD=true`, el análisis de IA queda bloqueado, pero la interfaz puede explorarse.
+- **Acceso al análisis:** sin contraseña en la interfaz. La API se invoca únicamente al pulsar **Analizar terreno**, **Reanalizar todas las fotos**, **Buscar precios en Internet** o **Actualizar referencias**. Una clave privada de OpenAI sigue siendo imprescindible y las llamadas pueden generar costos. En una web pública, establece cuotas y límites de gasto en la cuenta de OpenAI; para uso general se requiere una protección de acceso o limitación de consumo del lado del servidor.
 - **`VAV_MAX_VIDEO_MB`:** `32` en Render Free para reducir el riesgo de agotar memoria; el máximo local predeterminado es 100 MB.
 
 En producción, `opencv-python-headless` evita dependencias de ventanas gráficas que no están disponibles en servidores. Los cambios en `main` pasan por GitHub Actions: pruebas unitarias y arranque HTTP sin consumir la API. Una compilación exitosa **no** demuestra precisión visual, disponibilidad de la API ni validez pericial.

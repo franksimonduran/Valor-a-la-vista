@@ -53,6 +53,16 @@ class AppTests(unittest.TestCase):
         self.assertTrue(app.button(key="analyze").disabled)
         self.assertFalse(any(item.key == "asset" for item in app.radio))
 
+    def test_frontend_has_no_password_field(self):
+        with patch.dict("os.environ", {"APP_REQUIRE_PASSWORD": "true",
+                                     "APP_ACCESS_PASSWORD": "un_valor_antiguo"}, clear=False):
+            app = self.seeded_app(1)
+        self.assertFalse(app.exception)
+        self.assertFalse(app.button(key="analyze").disabled)
+        self.assertFalse(any("contraseña" in widget.label.casefold() or
+                             "password" in widget.label.casefold()
+                             for widget in app.text_input))
+
     def test_reset_clears_terrain_not_unrelated_state(self):
         app = self.seeded_app()
         app.number_input(key="area_terreno").set_value(80).run()
