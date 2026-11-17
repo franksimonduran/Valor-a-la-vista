@@ -12,6 +12,7 @@ from PIL import Image, ImageDraw, ImageOps
 from .core import DAMAGE_CATALOG
 from .vision import validate_image
 from .model_release import read_active_card
+from . import onnx_detector
 
 DATA_ROOT = Path(__file__).resolve().parent.parent / ".data"
 DEFAULT_WEIGHTS = DATA_ROOT / "models" / "terrenos" / "best.pt"
@@ -19,6 +20,12 @@ TERRAIN_CLASSES = tuple(code for code in DAMAGE_CATALOG["terreno"] if code != "o
 
 
 def detector_status():
+    if onnx_detector.ONNX_PATH.is_file():
+        try:
+            card = onnx_detector.read_onnx_card()
+        except (ValueError, OSError):
+            return False, "Modelo ONNX detectado, pero su ficha o SHA-256 es inválido. No se ejecutará."
+        return True, f"YOLO11n ONNX experimental · solo residuos · {card['completed_epochs']} épocas. No validado para uso real."
     if not DEFAULT_WEIGHTS.is_file():
         return False, "YOLO no activado: falta seleccionar y publicar el modelo evaluado (.data/models/terrenos/best.pt). El análisis con OpenAI es independiente y requiere que la API tenga cuota y permisos disponibles."
     if importlib.util.find_spec("ultralytics") is None:
@@ -32,12 +39,16 @@ def detector_status():
 
 def detector_card():
     try:
+        if onnx_detector.ONNX_PATH.is_file():
+            return onnx_detector.read_onnx_card()
         return read_active_card(DEFAULT_WEIGHTS)
     except (ValueError, OSError):
         return None
 
 
 def load_terrain_detector(weights=None, *, factory=None):
+    if weights is None and factory is None and onnx_detector.ONNX_PATH.is_file():
+        return onnx_detector.load_onnx_detector()
     card = read_active_card(DEFAULT_WEIGHTS) if weights is None else None
     path = Path(DEFAULT_WEIGHTS if weights is None else weights).resolve()
     if not path.is_relative_to(DATA_ROOT.resolve()) or path.suffix.lower() != ".pt" or not path.is_file():
@@ -69,6 +80,8 @@ def load_terrain_detector(weights=None, *, factory=None):
 
 
 def detect_regions(raw, model, *, threshold=.35):
+    if isinstance(model, onnx_detector.OpenCVYoloDetector):
+        return onnx_detector.detect_onnx_regions(raw, model, threshold=threshold)
     validate_image(raw)
     if not math.isfinite(threshold) or not 0 < threshold <= 1:
         raise ValueError("Umbral YOLO inválido.")
