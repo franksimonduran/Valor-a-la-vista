@@ -118,3 +118,14 @@ La rama principal `main` se despliega automáticamente en Render. Este prototipo
 En producción, `opencv-python-headless` evita dependencias de ventanas gráficas que no están disponibles en servidores. Los cambios en `main` pasan por GitHub Actions: pruebas unitarias y arranque HTTP sin consumir la API. Una compilación exitosa **no** demuestra precisión visual, disponibilidad de la API ni validez pericial.
 
 Render Free tiene disco temporal, una sola instancia y suspensión por inactividad. Las fotos viven en sesión y se pierden al reiniciar; descarga los informes antes de salir. Para uso público con usuarios reales deben añadirse autenticación robusta, consentimiento explícito, límites de consumo y almacenamiento seguro.
+
+
+## Límites de demostración y diagnóstico de errores
+
+- `VAV_DAILY_API_LIMIT` (valor inicial `32`): número máximo de consultas lógicas a OpenAI por día UTC **y proceso**.
+- `VAV_SESSION_API_LIMIT` (valor inicial `16`): consultas por sesión y día; cada foto sin analizar, reanálisis forzado y búsqueda de referencias utiliza una unidad. Los aciertos de caché no consumen otra unidad.
+- **Estos límites no garantizan un gasto máximo:** reiniciar el servidor los reinicia, otras instancias tienen contadores propios y los reintentos HTTP temporales pueden consumir más de una solicitud. Configura también topes en la cuenta de OpenAI. No hay contraseña pública, pero tampoco autenticación individual.
+- En HTTP 429, el sistema distingue cuota/facturación cuando OpenAI envía `insufficient_quota`, y límites temporales cuando envía `rate_limit_exceeded`; solo estos últimos se reintentan brevemente. Un HTTP 429 sin código reconocible no permite deducir la causa exacta.
+- La selección de un video extrae fotogramas localmente. Cambiar la cantidad sustituye las capturas de ese mismo video, sin borrar fotos independientes. Si falla, aparece **Reintentar extracción del video**.
+- Con una sola foto válida o un fotograma válido se puede comenzar la inspección. Si no hay cobertura completa, el panel indica expresamente que la lectura es parcial.
+- Ninguna prueba automática sustituye evaluar la calidad del análisis sobre fotografías reales y contrastarlas con un especialista.
