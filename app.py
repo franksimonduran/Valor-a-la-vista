@@ -195,11 +195,12 @@ else:
             st.error(str(exc))
 
 if source != "Video" and uploads:
-    stored, notices = add_photos(stored, uploads)
-    st.session_state[f"gallery_{asset}"] = stored
-    st.session_state[f"upload_notices_{asset}"] = notices
-    st.session_state[f"upload_version_{asset}"] = upload_version + 1
-    st.rerun()
+    if st.button("Añadir imágenes al terreno", key=f"add_uploads_{asset}"):
+        stored, notices = add_photos(stored, uploads)
+        st.session_state[f"gallery_{asset}"] = stored
+        st.session_state[f"upload_notices_{asset}"] = notices
+        st.session_state[f"upload_version_{asset}"] = upload_version + 1
+        st.rerun()
 for notice in st.session_state.get(f"upload_notices_{asset}", []):
     st.warning(notice)
 categories = ["Detalle adicional", *[name for name, _ in spec["fotos"]]]
