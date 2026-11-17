@@ -31,7 +31,7 @@ from valor_a_la_vista.inspection import (
     analyze_photos, analysis_is_current, analysis_message, context_fingerprint, photo_fingerprint,
 )
 from valor_a_la_vista.online_prices import search_repair_references
-from valor_a_la_vista.gallery import add_photos, add_video_frames, inspection_inputs, media_origins
+from valor_a_la_vista.gallery import add_photos, add_video_frames, replace_video_frames, inspection_inputs, media_origins
 from valor_a_la_vista.video import extract_video_frames, MAX_VIDEO_FRAMES, MAX_VIDEO_BYTES
 from valor_a_la_vista.detector import detector_status, detector_card, load_terrain_detector, detect_regions, annotated_image
 from valor_a_la_vista.report import build_report_data, html_report, report_digest
@@ -165,27 +165,41 @@ else:
     remaining = MAX_PHOTOS - len(stored)
     st.caption(f"Espacios disponibles para fotos y fotogramas: {remaining}. La extracción es local y no genera cargos de API.")
     video_selection_key = f"video_selection_{asset}"
+    video_failed_key = f"video_failed_{asset}"
     if selected_video is None:
         st.session_state.pop(video_selection_key, None)
+        st.session_state.pop(video_failed_key, None)
     else:
-        # La extracción local ocurre una vez por archivo/cantidad, sin consultar ni cobrar la API.
         video_bytes = selected_video.getvalue()
-        selection = (hashlib.sha256(video_bytes).hexdigest(), frame_count)
-        if st.session_state.get(video_selection_key) != selection:
-            st.session_state[video_selection_key] = selection
-            if remaining < 1:
+        video_sha = hashlib.sha256(video_bytes).hexdigest()
+        selection = (video_sha, frame_count)
+        # Reutiliza los espacios ocupados por fotogramas anteriores del mismo video.
+        others = {key: value for key, value in stored.items()
+                  if not (value.get("origen", {}).get("tipo") == "video"
+                          and value["origen"].get("video_sha256") == video_sha)}
+        available = MAX_PHOTOS - len(others)
+        failed = st.session_state.get(video_failed_key) == selection
+        retry = st.button("Reintentar extracción del video", key=f"retry_video_{asset}") if failed else False
+        if failed:
+            st.warning("La extracción anterior falló. Puedes reintentar el mismo video.")
+        if (not failed and st.session_state.get(video_selection_key) != selection) or retry:
+            if available < 1:
                 st.session_state[f"upload_notices_{asset}"] = [
-                    "La galería está llena: quita una fotografía para preparar el video."
+                    "Galería llena: quita una fotografía antes de preparar el video."
                 ]
+                st.session_state[video_failed_key] = selection
             else:
                 try:
                     with st.spinner("Preparando fotogramas del video..."):
-                        frames, notes = extract_video_frames(video_bytes, selected_video.name,
-                                                            max_frames=min(frame_count, remaining))
-                        stored, notices = add_video_frames(stored, frames)
+                        frames, notes = extract_video_frames(
+                            video_bytes, selected_video.name, max_frames=min(frame_count, available))
+                        stored, notices = replace_video_frames(stored, frames, video_sha)
                     st.session_state[f"gallery_{asset}"] = stored
                     st.session_state[f"upload_notices_{asset}"] = [*notes, *notices]
+                    st.session_state[video_selection_key] = selection
+                    st.session_state.pop(video_failed_key, None)
                 except (ValueError, RuntimeError, OSError) as exc:
+                    st.session_state[video_failed_key] = selection
                     st.session_state[f"upload_notices_{asset}"] = [f"Video no procesado: {exc}"]
 
 if source != "Video":
