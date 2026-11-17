@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import secrets
 import threading
 from datetime import date
 from pathlib import Path
@@ -33,6 +34,7 @@ from valor_a_la_vista.inspection import (
 from valor_a_la_vista.online_prices import search_repair_references
 from valor_a_la_vista.gallery import add_photos, add_video_frames, replace_video_frames, inspection_inputs, media_origins
 from valor_a_la_vista.video import extract_video_frames, MAX_VIDEO_FRAMES, MAX_VIDEO_BYTES
+from valor_a_la_vista.usage_limits import ApiUsageLimiter
 from valor_a_la_vista.detector import detector_status, detector_card, load_terrain_detector, detect_regions, annotated_image
 from valor_a_la_vista.report import build_report_data, html_report, report_digest
 from valor_a_la_vista import ui
@@ -103,6 +105,17 @@ def reset_inspection(asset_code):
     st.session_state.pop("report_image_cache", None)
 
 
+@st.cache_resource(max_entries=1, show_spinner=False)
+def api_usage_limiter():
+    """Contador compartido por el proceso Streamlit actual."""
+    return ApiUsageLimiter()
+
+
+def charge_api():
+    session_id = st.session_state.setdefault("vav_session_id", secrets.token_hex(20))
+    api_usage_limiter().charge(session_id)
+
+
 def run_analysis(asset, photos, api_key, model_name, force=False, photo_categories=None, base_url=None, origins=None):
     """Actualiza la inspección sin repetir fotos ya procesadas."""
     cache = st.session_state.setdefault(f"analysis_cache_{asset}", {})
@@ -112,6 +125,7 @@ def run_analysis(asset, photos, api_key, model_name, force=False, photo_categori
             asset, photos, api_key=api_key, model=model_name, cache=cache, force=force,
             photo_categories=photo_categories, base_url=base_url, origins=origins,
             progress=lambda value, name: bar.progress(value, text=f"Procesando {name}"),
+            before_api_call=charge_api,
         )
     finally:
         bar.empty()
@@ -130,6 +144,7 @@ with st.sidebar:
         st.error(str(exc))
         st.stop()
     st.markdown(ui.sidebar_meta("Modelo OpenAI", model_name), unsafe_allow_html=True)
+    st.caption("Demostración con límite diario de consultas para proteger el consumo de API.")
     if not api_key:
         st.markdown(ui.callout("warning", "Falta configurar OPENAI_API_KEY."), unsafe_allow_html=True)
     st.markdown(ui.rule(), unsafe_allow_html=True)
@@ -413,6 +428,7 @@ else:
                 references = {"signature": reference_signature, "web": None, "errors": []}
                 try:
                     with st.spinner("Buscando referencias..."):
+                        charge_api()
                         references["web"] = search_repair_references(
                             asset, statuses, evidence, location.strip(), api_key=api_key, model=model_name, damages=damages, base_url=base_url)
                 except (RuntimeError, ValueError) as ex:
