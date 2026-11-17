@@ -74,15 +74,38 @@ class TransportTests(unittest.TestCase):
 
     @patch("valor_a_la_vista.vision.time.sleep")
     @patch("valor_a_la_vista.vision.requests.post")
-    def test_rate_limit_retries_bounded(self, post, sleep):
-        failure = Mock(status_code=429)
-        failure.raise_for_status.side_effect = requests.HTTPError("secret")
-        post.return_value = failure
-        with self.assertRaisesRegex(RuntimeError, "429") as caught:
+    def test_unknown_429_is_not_retried(self, post, sleep):
+        response = Mock(status_code=429)
+        response.json.return_value = {"error": {"code": "unknown"}}
+        post.return_value = response
+        with self.assertRaisesRegex(RuntimeError, "429"):
+            post_openai("responses", {}, api_key="secret")
+        self.assertEqual(post.call_count, 1)
+        sleep.assert_not_called()
+
+    @patch("valor_a_la_vista.vision.time.sleep")
+    @patch("valor_a_la_vista.vision.requests.post")
+    def test_quota_429_is_not_retried(self, post, sleep):
+        response = Mock(status_code=429)
+        response.json.return_value = {"error": {"code": "insufficient_quota"}}
+        post.return_value = response
+        with self.assertRaisesRegex(RuntimeError, "cuota o facturación") as caught:
             post_openai("responses", {}, api_key="secret")
         self.assertNotIn("secret", str(caught.exception))
+        self.assertEqual(post.call_count, 1)
+        sleep.assert_not_called()
+
+    @patch("valor_a_la_vista.vision.time.sleep")
+    @patch("valor_a_la_vista.vision.requests.post")
+    def test_explicit_rate_limit_retries_bounded(self, post, sleep):
+        response = Mock(status_code=429, headers={"Retry-After": "1.5"})
+        response.json.return_value = {"error": {"code": "rate_limit_exceeded"}}
+        post.return_value = response
+        with self.assertRaisesRegex(RuntimeError, "temporalmente"):
+            post_openai("responses", {}, api_key="secret")
         self.assertEqual(post.call_count, 3)
         self.assertEqual(sleep.call_count, 2)
+        sleep.assert_any_call(1.5)
 
     def test_network_errors_are_sanitized(self):
         for exc in (requests.Timeout("secret"), requests.ConnectionError("secret")):
