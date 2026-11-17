@@ -33,7 +33,7 @@ class ONNXDetectorTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "best.onnx"
             card_path = Path(folder) / "model_card.json"
-            path.write_bytes(b"modelo sintético, no ejecutable")
+            path.write_bytes("modelo sintético, no ejecutable".encode("utf-8"))
             card_path.write_text(json.dumps(self.fake_card(hashlib.sha256(path.read_bytes()).hexdigest())),
                                  encoding="utf-8")
             self.assertEqual(onnx_detector.read_onnx_card(path, card_path)["completed_epochs"], 21)
