@@ -1,0 +1,4 @@
+-r requirements.txt
+-c requirements-yolo-lock.txt
+ultralytics>=8.3,<9
+opencv-python>=4.10,<5

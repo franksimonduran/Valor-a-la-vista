@@ -1,0 +1,64 @@
+[server]
+showEmailPrompt = false
+enableStaticServing = true
+address = "127.0.0.1"
+maxUploadSize = 12
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+base = "light"
+font = "Inter"
+headingFont = "Sora"
+baseRadius = "10px"
+buttonRadius = "8px"
+showWidgetBorder = true
+
+[[theme.fontFaces]]
+family = "Inter"
+url = "app/static/fonts/inter-400.woff2"
+weight = 400
+
+[[theme.fontFaces]]
+family = "Inter"
+url = "app/static/fonts/inter-500.woff2"
+weight = 500
+
+[[theme.fontFaces]]
+family = "Inter"
+url = "app/static/fonts/inter-600.woff2"
+weight = 600
+
+[[theme.fontFaces]]
+family = "Sora"
+url = "app/static/fonts/sora-600.woff2"
+weight = 600
+
+[theme.light]
+primaryColor = "#5931CB"
+backgroundColor = "#F1EFF9"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#211B38"
+borderColor = "#E3DFF1"
+
+[theme.light.sidebar]
+backgroundColor = "#4332A6"
+secondaryBackgroundColor = "#302380"
+textColor = "#FFFFFF"
+primaryColor = "#FFD875"
+borderColor = "#9479D0"
+
+[theme.dark]
+primaryColor = "#C3A9FF"
+backgroundColor = "#111022"
+secondaryBackgroundColor = "#1C1A31"
+textColor = "#F6F3FF"
+borderColor = "#40395C"
+
+[theme.dark.sidebar]
+backgroundColor = "#302380"
+secondaryBackgroundColor = "#4332A6"
+textColor = "#FFFFFF"
+primaryColor = "#FFD875"
+borderColor = "#9479D0"

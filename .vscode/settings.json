@@ -1,0 +1,19 @@
+{
+    "files.exclude": {
+        "**/.venv": true,
+        "**/__pycache__": true,
+        ".data/python": true,
+        ".data/cache": true,
+        ".data/temp": true
+    },
+    "search.exclude": {
+        "**/.venv/**": true,
+        "**/.data/**": true
+    },
+    "files.watcherExclude": {
+        "**/.venv/**": true,
+        "**/.data/python/**": true,
+        "**/.data/cache/**": true,
+        "**/.data/backups/**": true
+    }
+}

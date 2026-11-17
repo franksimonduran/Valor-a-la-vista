@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Valor A la Vista · Maqueta de diseño</title>
+<style>
+  @font-face {
+    font-family: "Sora";
+    src: url("../static/fonts/sora-600.woff2") format("woff2");
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Inter";
+    src: url("../static/fonts/inter-400.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Inter";
+    src: url("../static/fonts/inter-500.woff2") format("woff2");
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Inter";
+    src: url("../static/fonts/inter-600.woff2") format("woff2");
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  :root {
+    --bg: #F1EFF9;
+    --surface: #FFFFFF;
+    --raised: #F4F2FC;
+    --line: #E3DFF1;
+    --ink: #211B38;
+    --muted: #625B78;
+    --accent: #5931CB;
+    --cinema: #3156B9;
+    --alert: #8A5E12;
+    --danger: #B03A32;
+    --ok: #1E704C;
+    --elev-1: 0 1px 2px rgba(15,43,51,.05), 0 8px 24px rgba(15,43,51,.05);
+    --elev-2: 0 2px 4px rgba(15,43,51,.06), 0 18px 40px rgba(15,43,51,.10);
+    --radius: 14px;
+    --radius-sm: 10px;
+  }
+  [data-theme="dark"] {
+    --bg: #111022;
+    --surface: #1C1A31;
+    --raised: #282440;
+    --line: #40395C;
+    --ink: #F6F3FF;
+    --muted: #C1B9D7;
+    --accent: #C3A9FF;
+    --cinema: #9AB6FF;
+    --alert: #FFC66D;
+    --danger: #FF918B;
+    --ok: #5DE4B8;
+    --elev-1: 0 1px 2px rgba(0,0,0,.45), 0 10px 28px rgba(0,0,0,.32);
+    --elev-2: 0 2px 6px rgba(0,0,0,.50), 0 22px 56px rgba(0,0,0,.42);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Inter", "Segoe UI Variable Text", "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    transition: background .2s ease, color .2s ease;
+  }
+  h1, h2, h3, h4 { font-family: "Sora", "Segoe UI Variable Display", "Segoe UI", sans-serif; letter-spacing: -.01em; }
+  .page {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 28px 80px;
+  }
+
+  /* Barra superior */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 14px 0;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar-left { display: flex; align-items: baseline; gap: 14px; }
+  .topbar-mono {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: -.02em;
+  }
+  .topbar-mono .accent { color: var(--accent); }
+  .topbar-label {
+    font-size: .72rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .steps { display: flex; flex-wrap: wrap; align-items: center; gap: 22px; list-style: none; margin: 0; padding: 0; }
+  .steps li {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: .72rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .steps li.done { color: var(--ink); }
+  .steps li.active { color: var(--accent); }
+  .steps .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--line); }
+  .steps li.done .dot { background: var(--muted); }
+  .steps li.active .dot { background: var(--accent); }
+
+  /* Masthead */
+  .masthead {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 28px;
+    margin-bottom: 22px;
+    padding: 30px 32px;
+    background: #4332A6;
+    border: 1px solid #6555C8;
+    border-radius: var(--radius);
+    box-shadow: var(--elev-1);
+  }
+  .masthead::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 1px;
+    background: var(--accent);
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+  .monogram {
+    font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    font-size: 3rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -.03em;
+    color: var(--ink);
+  }
+  .monogram .accent { color: #5931CB; }
+  .wordmark {
+    font-family: "Sora", "Segoe UI", sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: .14em;
+    margin: 8px 0 0;
+  }
+  .rule { width: 56px; height: 1px; background: var(--line); margin: 12px 0 10px; }
+  .eyebrow {
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0;
+  }
+  .tagline { color: var(--ink); font-family: "Sora", sans-serif; font-size: clamp(1.25rem, 2.6vw, 2.1rem); font-weight: 600; letter-spacing: -.03em; line-height: 1.2; margin: 10px 0 0; max-width: 22ch; }
+  .masthead-status {
+    align-self: end;
+    border-left: 1px solid var(--line);
+    padding-left: 24px;
+    text-align: right;
+  }
+  .status-label { font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+  .status-value { font-family: "Sora", "Segoe UI", sans-serif; font-size: 1rem; font-weight: 600; margin: 0; }
+  .status-meta { font-size: .82rem; color: var(--muted); margin: 6px 0 0; }
+  .masthead .monogram, .masthead .wordmark, .masthead .tagline, .masthead .status-value { color: #FFFFFF; }
+  .masthead .eyebrow, .masthead .status-label, .masthead .status-meta { color: #E4E0FF; }
+  .masthead .monogram .accent { color: #87E9E0; }
+  .masthead-status { background: #302380; border: 1px solid #897EE0; border-radius: 14px; padding: 16px 20px; }
+
+  /* Riel de sección */
+  .section { border-top: 1px solid var(--line); padding: 26px 0 6px; margin-top: 38px; }
+  .section-rail {
+    font-family: "Sora", "Segoe UI", sans-serif;
+    font-size: .82rem;
+    color: var(--muted);
+    padding-top: 3px;
+  }
+  .section h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -.01em;
+    margin: 0;
+  }
+  .section p { color: var(--muted); margin: 6px 0 0; }
+
+  /* Tarjetas */
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 18px; margin-top: 18px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px 18px 18px;
+    box-shadow: var(--elev-1);
+    transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+  }
+  .card:hover { border-color: var(--accent); box-shadow: var(--elev-2); transform: translateY(-1px); }
+  .card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .card-title { font-family: "Sora", sans-serif; font-size: 1rem; font-weight: 600; margin: 0; }
+  .card-number { color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 8px; }
+  .card-caption { color: var(--muted); font-size: .82rem; margin: 4px 0 12px; }
+  .shot {
+    position: relative;
+    aspect-ratio: 3 / 2;
+    border-radius: var(--radius-sm);
+    border: 1px dashed var(--line);
+    background: var(--raised);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+  .shot span { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .shot .fade {
+    position: absolute; inset: auto 0 0 0; height: 54px;
+    background: rgba(7,12,16,.55);
+  }
+  .shot .caption {
+    position: absolute; left: 12px; bottom: 8px;
+    color: #FFFFFF; font-size: .72rem; letter-spacing: .06em;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: .72rem; font-weight: 600;
+    color: var(--muted);
+  }
+  .chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .chip.ready { color: var(--ok); }
+  .chip.pending { color: var(--muted); }
+
+  /* Avisos */
+  .callout {
+    border-left: 2px solid var(--callout, var(--accent));
+    margin: 12px 0;
+    padding: 2px 0 2px 14px;
+  }
+  .callout-label {
+    display: block;
+    color: var(--callout, var(--accent));
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .callout p { margin: 0; color: var(--ink); }
+  .callout-note { --callout: var(--accent); }
+  .callout-warning { --callout: var(--alert); }
+  .callout-error { --callout: var(--danger); }
+  .callout-success { --callout: var(--ok); }
+
+  /* Score */
+  .score {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 30px;
+    align-items: center;
+    margin: 18px 0 10px;
+    padding: 24px 28px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--elev-2);
+  }
+  .score-gauge { display: grid; justify-items: center; }
+  .gauge { position: relative; width: 112px; height: 112px; }
+  .gauge svg { display: block; width: 100%; height: 100%; transform: rotate(-90deg); }
+  .gauge circle { fill: none; stroke-width: 8; }
+  .gauge .track { stroke: var(--line); }
+  .gauge .arc { stroke: var(--accent); stroke-linecap: round; }
+  .gauge-center { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+  .gauge-value { font-size: 1.75rem; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1; }
+  .gauge-unit { display: block; font-size: .72rem; color: var(--muted); margin-top: 4px; }
+  .gauge-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); margin: 10px 0 0; }
+  .gauge-label.partial { color: var(--alert); }
+  .score-body { display: grid; gap: 12px; }
+  .score-eyebrow { font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 0; }
+  .score-category { font-family: "Sora", sans-serif; font-size: 1.35rem; font-weight: 600; margin: 0; }
+  .ledger { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 28px; margin: 0; }
+  .ledger div { border-top: 1px solid var(--line); padding-top: 10px; }
+  .ledger dt { font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+  .ledger dd { font-size: 1.35rem; font-weight: 600; font-variant-numeric: tabular-nums; margin: 4px 0 0; }
+
+  /* Costo referencial */
+  .cost {
+    margin: 14px 0;
+    padding: 24px 28px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius);
+    box-shadow: var(--elev-1);
+  }
+  .cost-label { font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 0; }
+  .cost-label.partial { color: var(--alert); }
+  .cost-value {
+    font-family: "Sora", "Segoe UI", sans-serif;
+    font-size: 2.4rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.02em;
+    margin: 6px 0 0;
+  }
+  .cost-mid { color: var(--muted); font-size: .9rem; margin: 4px 0 0; }
+  .cost-note { color: var(--muted); font-size: .8rem; margin: 14px 0 0; }
+  .draft {
+    display: inline-block;
+    margin: 22px 0 0;
+    padding: 6px 10px;
+    border: 1px solid var(--alert);
+    border-radius: 999px;
+    color: var(--alert);
+    font-size: .68rem;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+  .table-wrap { margin: 14px 0; overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius-sm); }
+  .table { width: 100%; min-width: 680px; border-collapse: collapse; font-size: .86rem; }
+  .table th, .table td { padding: 10px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+  .table th { background: var(--raised); color: var(--muted); font-size: .68rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+  .table tr:last-child td { border-bottom: 0; }
+  .table td { font-variant-numeric: tabular-nums; }
+  .table small { display: block; color: var(--muted); font-size: .74rem; margin-top: 4px; }
+
+  /* Formulario */
+  .form { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 18px; }
+  .field label, .field .field-label { display: block; font-size: .8rem; font-weight: 500; margin-bottom: 6px; }
+  .field-value {
+    margin: 0;
+    padding: 10px 12px;
+    font-size: .95rem;
+    color: var(--muted);
+    background: var(--raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+  }
+  .radio-list { display: grid; gap: 9px; list-style: none; margin: 0; padding: 2px 0 0; }
+  .radio-list li { align-items: center; color: var(--ink); display: flex; font-size: .9rem; gap: 9px; }
+  .radio-dot { border: 1px solid var(--line); border-radius: 50%; flex: none; height: 14px; position: relative; width: 14px; }
+  .radio-list li.is-selected .radio-dot { border-color: var(--accent); }
+  .radio-list li.is-selected .radio-dot::after { background: var(--accent); border-radius: 50%; content: ""; inset: 3px; position: absolute; }
+  .field input, .field select {
+    width: 100%;
+    padding: 10px 12px;
+    font: inherit;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    outline: none;
+    transition: border-color .15s ease;
+  }
+  .field input:focus, .field select:focus {
+    border-color: var(--accent);
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 26px; }
+  .btn {
+    font: inherit; font-weight: 600; letter-spacing: .01em;
+    min-height: 44px;
+    border-radius: var(--radius-sm); padding: 10px 18px; cursor: pointer;
+    border: 1px solid transparent;
+    transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+  }
+  .btn-primary { background: var(--accent); color: var(--bg); box-shadow: var(--elev-1); }
+  [data-theme="light"] .btn-primary { color: #FFFFFF; }
+  .btn-primary:hover { border-color: var(--ink); box-shadow: var(--elev-2); transform: translateY(-1px); }
+  .btn-ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+  .btn-ghost:hover { border-color: var(--accent); }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .toggle {
+    position: fixed; right: 20px; bottom: 20px; z-index: 30;
+    background: var(--surface); color: var(--ink);
+    border: 1px solid var(--line); border-radius: var(--radius-sm);
+    box-shadow: var(--elev-1);
+    padding: 9px 16px; font: inherit; font-size: .8rem; cursor: pointer;
+  }
+  .toggle:hover { border-color: var(--accent); }
+
+  @media (max-width: 860px) {
+    .steps { gap: 14px; }
+    .steps li { font-size: .64rem; }
+    .section { grid-template-columns: 28px 1fr; gap: 12px; }
+    .score { grid-template-columns: 1fr; padding: 22px; }
+    .score-gauge { justify-items: start; }
+    .ledger { grid-template-columns: 1fr; }
+    .form { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 760px) {
+    .masthead { grid-template-columns: 1fr; gap: 18px; padding: 24px; }
+    .monogram { font-size: 2.4rem; }
+    .wordmark { font-size: .86rem; letter-spacing: .12em; }
+    .masthead-status { border-left: 0; border-top: 1px solid var(--line); padding: 14px 0 0; text-align: left; }
+    .cost-value { font-size: 2rem; }
+    .cost { padding: 20px; }
+  }
+  @media (max-width: 720px) {
+    .page { padding: 0 18px 70px; }
+    .grid { grid-template-columns: 1fr; }
+    .topbar-label { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-mono">V<span class="accent">A</span>V</span>
+      <span class="topbar-label">Vivienda / mejoramiento</span>
+    </div>
+    <ol class="steps">
+      <li class="done"><span class="dot"></span>Fotos</li>
+      <li class="active"><span class="dot"></span>Análisis</li>
+      <li><span class="dot"></span>Resultado</li>
+      <li><span class="dot"></span>Informe</li>
+    </ol>
+  </header>
+
+  <div class="masthead">
+    <div>
+      <div class="monogram">V<span class="accent">A</span>V</div>
+      <h1 class="wordmark">Valor A la Vista</h1>
+      <div class="rule"></div>
+      <p class="eyebrow">Inspección visual</p>
+      <p class="tagline">Lo visible, convertido en claridad.</p>
+    </div>
+    <div class="masthead-status">
+      <p class="status-label">Inspección</p>
+      <p class="status-value">Vivienda / mejoramiento</p>
+      <p class="status-meta">Ejemplo ilustrativo · Análisis completo</p>
+    </div>
+  </div>
+
+  <section class="section">
+    <div>
+      <h2>Fotos</h2>
+    </div>
+  </section>
+
+  <p class="card-caption">Arrastra una imagen a cada recuadro. JPEG, PNG o WebP, hasta 12 MB. Revisa rostros, placas y documentos.</p>
+
+  <div class="grid">
+    <article class="card">
+      <div class="card-head">
+        <h3 class="card-title">Fachada</h3>
+        <span class="chip ready">Cargada</span>
+      </div>
+      <p class="card-caption">Fachada completa, sin personas.</p>
+      <div class="shot">
+        <img alt="Marcador de fachada" src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 400'%3E%3Crect width='600' height='400' fill='%23131E25'/%3E%3Cg stroke='%238B9AA0' stroke-width='2' fill='none'%3E%3Crect x='120' y='150' width='360' height='200'/%3E%3Crect x='270' y='250' width='60' height='100'/%3E%3Cpath d='M100 150 300 60l200 90'/%3E%3C/g%3E%3C/svg%3E">
+        <div class="fade"></div>
+        <span class="caption">Fachada</span>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="card-head">
+        <h3 class="card-title">Muros</h3>
+      </div>
+      <p class="card-caption">Paredes, acabados, fisuras y manchas.</p>
+      <div class="shot">
+        <span>Sin imagen</span>
+      </div>
+    </article>
+  </div>
+
+  <p class="card-caption">Maqueta estática: imágenes y cifras ilustrativas; los controles no procesan datos.</p>
+
+  <div class="form">
+    <div class="field">
+      <label for="area">Área declarada (m²)</label>
+      <input id="area" type="number" value="80" inputmode="decimal">
+    </div>
+    <div class="field">
+      <label for="location">Ubicación declarada</label>
+      <input id="location" type="text" value="Lima" placeholder="Distrito, ciudad">
+    </div>
+  </div>
+  <p class="card-caption">Área y ubicación son declaradas, no verificadas.</p>
+
+  <section class="section">
+    <div>
+      <h2>Análisis</h2>
+    </div>
+  </section>
+
+  <p class="card-caption">Al presionar Analizar, autorizas el envío de las fotos a Google Gemini.</p>
+  <button class="btn btn-primary" type="button">Analizar</button>
+
+  <section class="score">
+    <div class="score-gauge">
+      <div class="gauge" role="img" aria-label="Score parcial: 72 de 100">
+        <svg viewBox="0 0 112 112" aria-hidden="true" focusable="false">
+          <circle class="track" cx="56" cy="56" r="52"></circle>
+          <circle class="arc" cx="56" cy="56" r="52" stroke-dasharray="326.73" stroke-dashoffset="91.48"></circle>
+        </svg>
+        <div class="gauge-center">
+          <span class="gauge-value">72</span>
+          <span class="gauge-unit">/100</span>
+        </div>
+      </div>
+      <p class="gauge-label partial">Score parcial</p>
+    </div>
+    <div class="score-body">
+      <p class="score-eyebrow">Lectura preliminar</p>
+      <p class="score-category">Estado regular</p>
+      <dl class="ledger">
+        <div><dt>Cobertura ponderada</dt><dd>70 %</dd></div>
+        <div><dt>Criterios evaluados</dt><dd>3 / 4</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <p class="card-caption">Demostración no calibrada; el score solo cubre lo observado.</p>
+
+  <div class="callout callout-success">
+    <span class="callout-label">Completado</span>
+    <p>Análisis completo: 4 de 4 tomas.</p>
+  </div>
+
+  <section class="section">
+    <div>
+      <h2>Resultado</h2>
+    </div>
+  </section>
+
+  <div class="cost">
+    <p class="cost-label">Costo referencial de reparación · rango</p>
+    <p class="cost-value">S/ 12,200.00 – S/ 27,400.00</p>
+    <p class="cost-mid">Valor central S/ 19,800.00.</p>
+    <dl class="ledger">
+      <div><dt>Partidas con precio</dt><dd>3</dd></div>
+      <div><dt>Sin precio referencial</dt><dd>0</dd></div>
+      <div><dt>Área</dt><dd>80 m² declarados</dd></div>
+      <div><dt>Ubicación</dt><dd>Lima</dd></div>
+    </dl>
+    <p class="cost-note">Rango orientativo con precios de referencia.</p>
+  </div>
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Intervención</th>
+          <th>Cantidad</th>
+          <th>Precio unitario</th>
+          <th>Subtotal</th>
+          <th>Fuente y fecha</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Resane y tarrajeo de muros<small>Incluye mano de obra y materiales; varía por zona.</small></td>
+          <td>200 m²</td>
+          <td>S/ 25.00 – S/ 65.00</td>
+          <td>S/ 5,000.00 – S/ 13,000.00</td>
+          <td>PRONIED y sondeo de mercado<small>2026-11-15</small></td>
+        </tr>
+        <tr>
+          <td>Reparación de cobertura<small>Rango instalado; no incluye estructura nueva.</small></td>
+          <td>80 m²</td>
+          <td>S/ 60.00 – S/ 120.00</td>
+          <td>S/ 4,800.00 – S/ 9,600.00</td>
+          <td>Obra Maestra (techado calamina)<small>2026-11-15</small></td>
+        </tr>
+        <tr>
+          <td>Tratamiento de humedad<small>No incluye diagnóstico estructural.</small></td>
+          <td>80 m²</td>
+          <td>S/ 30.00 – S/ 60.00</td>
+          <td>S/ 2,400.00 – S/ 4,800.00</td>
+          <td>Sodimac (reparación de humedad)<small>2026-11-15</small></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="card-caption">Área y ubicación declaradas; no incluye IGV, fletes, permisos ni diagnóstico estructural.</p>
+
+  <section class="section">
+    <div>
+      <h2>Informe</h2>
+    </div>
+  </section>
+
+  <span class="draft">Borrador automático, sin revisión humana</span>
+
+  <p class="card-caption">El HTML incluye las fotos; compártelo con cuidado. SHA-256 del contenido (no es firma digital).</p>
+
+  <div class="actions">
+    <button class="btn btn-ghost" type="button">Descargar informe HTML (imprimible en PDF)</button>
+    <button class="btn btn-ghost" type="button">Descargar datos JSON</button>
+  </div>
+
+</div>
+
+<button class="toggle" type="button" id="toggle" aria-pressed="true">Modo claro</button>
+
+<script>
+  const root = document.documentElement;
+  const button = document.getElementById("toggle");
+  button.addEventListener("click", () => {
+    const dark = root.dataset.theme === "dark";
+    root.dataset.theme = dark ? "light" : "dark";
+    button.textContent = dark ? "Modo oscuro" : "Modo claro";
+    button.setAttribute("aria-pressed", String(!dark));
+  });
+</script>
+</body>
+</html>

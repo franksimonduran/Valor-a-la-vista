@@ -1,0 +1,20 @@
+activo,criterio,intervencion,unidad,factor,precio_min,precio_max,moneda,fuente,fecha,nota
+vivienda,muros,Resane y tarrajeo de muros,m2,2.5,25,65,PEN,PRONIED y sondeo de mercado,2026-11-15,Incluye mano de obra y materiales; varía por zona.
+vivienda,techo,Reparación de cobertura,m2,1.0,60,120,PEN,Obra Maestra (techado calamina),2026-11-15,Rango instalado; no incluye estructura nueva.
+vivienda,pisos,Reposición de piso,m2,1.0,35,80,PEN,Sodimac y sondeo de mercado,2026-11-15,Material e instalación; varía por acabado.
+vivienda,humedad,Tratamiento de humedad,m2,1.0,30,60,PEN,Sodimac (reparación de humedad),2026-11-15,No incluye diagnóstico estructural.
+vivienda,aberturas,Ajuste de puertas y ventanas,servicio,0,80,300,PEN,Sondeo de mercado,2026-11-15,Por unidad; no incluye cambio completo.
+mototaxi,carroceria,Planchado y pintura de carrocería,servicio,0,250,900,PEN,Sondeo de mercado automotriz,2026-11-15,Depende del daño y del taller.
+mototaxi,neumaticos,Revisión y cambio de neumáticos,servicio,0,150,700,PEN,Sondeo de mercado,2026-11-15,No incluye llantas de competencia.
+mototaxi,cabina,Tapicería y acabados de cabina,servicio,0,150,500,PEN,Sondeo de mercado,2026-11-15,Alcance variable.
+mototaxi,corrosion,Tratamiento de oxidación,servicio,0,120,500,PEN,Sondeo de mercado,2026-11-15,No garantiza eliminación total.
+mototaxi,accesorios,Revisión de accesorios visibles,servicio,0,80,400,PEN,Sondeo de mercado,2026-11-15,Faros, espejos y similares.
+maquina,carcasa,Revisión de cabezal y carcasa,servicio,0,150,500,PEN,Servicio técnico de máquinas de coser,2026-11-15,No incluye repuestos.
+maquina,componentes,Mantenimiento de zona de costura,servicio,0,200,800,PEN,Servicio técnico de máquinas de coser,2026-11-15,Incluye ajuste básico; no prueba funcional.
+maquina,corrosion,Limpieza y protección de oxidación,servicio,0,120,400,PEN,Servicio técnico de máquinas de coser,2026-11-15,Alcance variable.
+maquina,guardas,Revisión de protecciones,servicio,0,100,350,PEN,Servicio técnico de máquinas de coser,2026-11-15,No certifica cumplimiento normativo.
+maquina,base,Revisión de mesa y soporte,servicio,0,100,300,PEN,Servicio técnico de máquinas de coser,2026-11-15,No incluye estabilidad estructural.
+terreno,acceso,Mejoramiento de acceso,servicio,0,300,1500,PEN,Sondeo de mercado,2026-11-15,No incluye permisos ni obras legales.
+terreno,superficie,Limpieza y nivelación,m2,1.0,3,12,PEN,Sondeo de mercado,2026-11-15,No incluye movimiento de tierras mayor.
+terreno,drenaje,Mejoramiento de drenaje,servicio,0,500,2500,PEN,Sondeo de mercado,2026-11-15,No incluye estudio de suelos.
+terreno,limites,Delimitación referencial,servicio,0,300,1500,PEN,Sondeo de mercado,2026-11-15,No sustituye verificación legal de linderos.
